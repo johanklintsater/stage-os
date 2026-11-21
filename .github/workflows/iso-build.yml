@@ -1,5 +1,11 @@
-name: Candidate ISO build (manual)
+name: Candidate ISO build
 on:
+  push:
+    branches: [develop/stage-os-0.7]
+    paths:
+      - 'iso/**'
+      - 'stageos/**'
+      - '.github/workflows/iso-build.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,12 +17,22 @@ jobs:
       options: --privileged
     timeout-minutes: 90
     steps:
+      - name: Install GitHub Actions dependencies
+        run: |
+          apt-get update
+          apt-get install -y ca-certificates git nodejs npm
       - uses: actions/checkout@v4
       - name: Build candidate ISO
         run: bash iso/build-iso.sh
+      - name: Record SHA256
+        if: success()
+        run: cd build-work && sha256sum *.iso > SHA256SUMS
       - uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: stage-os-candidate-iso
-          path: build-work/*.iso
+          path: |
+            build-work/*.iso
+            build-work/SHA256SUMS
           if-no-files-found: error
           retention-days: 7
