@@ -1,4 +1,4 @@
-name: Candidate ISO build
+name: STAGE OS 0.8 Beta ISO
 on:
   push:
     branches: [develop/stage-os-0.7]
@@ -60,11 +60,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: v0.7.1-test-${{ github.run_number }}
+          TAG: v0.8.0-beta.${{ github.run_number }}
           COMMIT: ${{ github.sha }}
         run: |
           gh release create "$TAG" dist/*.iso dist/SHA256SUMS \
             --target "$COMMIT" \
-            --title "STAGE OS 0.7.1 test build" \
+            --title "STAGE OS 0.8 Beta" \
             --prerelease --latest=false \
             --notes "Experimental VirtualBox ISO, not security-certified. Verify SHA256SUMS. Live-mode data may be lost."
