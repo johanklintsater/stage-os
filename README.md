@@ -1,4 +1,4 @@
-# STAGE OS 0.7 — Studio Desktop (experimental)
+# STAGE OS 0.8 Beta — Studio Desktop (experimental)
 
 A lightweight desktop prototype for older 64-bit PCs, musicians, setlists, teleprompters, and text documents. **This is not yet a tested, installable operating-system release.** The underlying Linux distribution is Debian-based but users should eventually install STAGE OS from one USB image.
 
@@ -31,7 +31,7 @@ The build script requires Debian 13 (trixie) and root privileges **inside an iso
 
 ## GitHub Actions
 - **Tests** runs Python unit tests and syntax checks on pushes and pull requests.
-- **Candidate ISO build** is **manual only** (Actions → Candidate ISO build → Run workflow), and is unverified. An artifact is not proof of a safe installer.
+- **STAGE OS 0.8 Beta ISO** runs on changes and can be triggered manually. Its Actions artifact is automatically ZIP-wrapped by GitHub. To publish a direct `.iso` as a prerelease, use **Run workflow** on the development branch with `publish_release=true` only after security review. The resulting file appears under GitHub **Releases**, not **Actions → Artifacts**. Neither a successful build nor a SHA-256 match proves the ISO is malware-free.
 - Do not publish an ISO as a stable release until VM and physical-hardware acceptance tests pass.
 
 ## Release checklist
@@ -42,3 +42,10 @@ The build script requires Debian 13 (trixie) and root privileges **inside an iso
 5. Add safe update/rollback process, accessibility and backup-recovery documentation.
 
 Open-source under MIT License. Contributions welcome.
+## 0.8 Beta acceptance tests
+- Boot ISO in a disposable VirtualBox VM; check login, startup screen, clock, all four tiles, and window management.
+- Import and play two audio files: each must stop at end; next file must never auto-play.
+- Check sound output, volume, wired network and Wi-Fi on supported hardware.
+- Check file import, edit, save, trash, restore, and reboot persistence separately.
+- Verify SHA256SUMS and inspect security scanner warnings before distribution. Do not bypass browser protections.
+- 32-bit Legacy, MIDI foot control and remote tablet display remain future work.
