@@ -55,7 +55,7 @@ class Desktop:
         top=tk.Frame(root,bg='#18232b'); top.pack(fill='x')
         toolbar=tk.Frame(root,bg='#18232b');toolbar.pack(fill='x')
         tk.Label(top,text='◉ STAGE OS',font=('DejaVu Sans',22,'bold'),fg='#6df0c1',bg='#18232b').pack(side='left',padx=20,pady=12)
-        for name,fn in [('LÅTTEXTER',self.open_selected_text),('LJUD',self.toggle_audio),('NY TEXT',self.new_text),('IMPORTERA',self.import_files),('NÄTVERK',self.network),('SETLIST',self.show_setlist),('PAPPERSKORG',self.show_trash),('BACKUP',self.backup_dialog)]:
+        for name,fn in [('LYRIC MONITOR',self.enter_live_mode),('AUDIO PLAYER',self.audio_player),('NY TEXT',self.new_text),('IMPORTERA',self.import_files),('NÄTVERK',self.network),('SETLIST',self.show_setlist),('PAPPERSKORG',self.show_trash),('BACKUP',self.backup_dialog)]:
             ttk.Button(toolbar,text=name,command=fn).pack(side='left',padx=3,pady=4)
         # Secondary apps in a compact menu, avoiding buttons clipped on smaller screens.
         apps=tk.Menubutton(top,text='APPAR ▾',font=('DejaVu Sans',10,'bold'),
@@ -67,6 +67,7 @@ class Desktop:
         menu.add_command(label='Gmail (webb)',command=self.gmail)
         menu.add_command(label='Ljudinställningar',command=self.sound_settings)
         menu.add_command(label='Soundboard',command=self.soundboard)
+        menu.add_command(label='Audio Player',command=self.audio_player)
         menu.add_command(label='Startsida',command=self.show_home)
         menu.add_separator()
         menu.add_command(label='Uppdatera bibliotek',command=self.refresh)
@@ -119,10 +120,10 @@ class Desktop:
         tk.Label(self.home,text='BOOT. PLAY. PERFORM.',fg='#6df0c1',bg='#0b111a',
                  font=('DejaVu Sans',14,'bold')).pack(pady=(0,35))
         grid=tk.Frame(self.home,bg='#0b111a');grid.pack()
-        choices=[('LIVE MODE','Texter och setlist',self.enter_live_mode),
-                 ('SOUNDBOARD','Musik och ljudeffekter',self.soundboard),
-                 ('LIBRARY','Bibliotek och filer',self.enter_desktop),
-                 ('DESKTOP','Verktyg och nätverk',self.enter_desktop)]
+        choices=[('LYRIC MONITOR','Texter och setlist',self.enter_live_mode),
+                 ('AUDIO PLAYER','Låtar och backing tracks',self.audio_player),
+                 ('SOUNDBOARD','Ljudeffekter och jinglar',self.soundboard),
+                 ('DESKTOP','Filer och verktyg',self.enter_desktop)]
         for i,(name,description,action) in enumerate(choices):
             tile=tk.Frame(grid,bg='#182b34',width=260,height=120)
             tile.grid(row=i//2,column=i%2,padx=9,pady=9)
@@ -141,6 +142,10 @@ class Desktop:
 
     def enter_desktop(self):
         self.home.place_forget()
+
+    def audio_player(self):
+        self.enter_desktop()
+        Soundboard(self.root,LIBRARY,self.audio)
 
     def soundboard(self):
         self.enter_desktop()
