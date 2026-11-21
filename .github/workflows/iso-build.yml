@@ -1,0 +1,70 @@
+name: STAGE OS 0.8 Beta ISO
+on:
+  push:
+    branches: [develop/stage-os-0.7]
+    paths:
+      - 'iso/**'
+      - 'stageos/**'
+      - '.github/workflows/iso-build.yml'
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish direct ISO as a prerelease after manual security review'
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    container:
+      image: debian:trixie
+      options: --privileged
+    timeout-minutes: 90
+    steps:
+      - name: Install GitHub Actions dependencies
+        run: |
+          apt-get update
+          apt-get install -y ca-certificates git nodejs npm
+      - uses: actions/checkout@v4
+      - name: Build candidate ISO
+        run: bash iso/build-iso.sh
+      - name: Record SHA256
+        if: success()
+        run: cd build-work && sha256sum *.iso > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: stage-os-candidate-iso
+          path: |
+            build-work/*.iso
+            build-work/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: stage-os-candidate-iso
+          path: dist
+      - name: Verify checksum
+        run: cd dist && sha256sum -c SHA256SUMS
+      - name: Publish direct ISO prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: v0.8.0-beta.${{ github.run_number }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          gh release create "$TAG" dist/*.iso dist/SHA256SUMS \
+            --target "$COMMIT" \
+            --title "STAGE OS 0.8 Beta" \
+            --prerelease --latest=false \
+            --notes "Experimental VirtualBox ISO, not security-certified. Verify SHA256SUMS. Live-mode data may be lost."
