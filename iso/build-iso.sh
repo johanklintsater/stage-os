@@ -13,15 +13,16 @@ apt-get install -y live-build
 mkdir -p "$PROJECT/build-work"
 cd "$PROJECT/build-work"
 lb config --distribution trixie --architectures amd64 --binary-images iso-hybrid --debian-installer live --debian-installer-gui false --archive-areas 'main non-free-firmware' --bootappend-live 'boot=live components quiet'
-mkdir -p config/package-lists config/includes.chroot/opt/stageos config/includes.chroot/usr/share/xsessions config/includes.chroot/etc/lightdm/lightdm.conf.d config/includes.chroot/usr/local/bin config/includes.chroot/etc/skel/StageOS/library config/hooks/live
+mkdir -p config/package-lists config/includes.chroot/opt/stageos config/includes.chroot/usr/share/xsessions config/includes.chroot/etc/lightdm/lightdm.conf.d config/includes.chroot/usr/local/bin config/includes.chroot/etc/skel/StageOS/library config/includes.chroot/etc/xdg/openbox config/hooks/live
 cat > config/package-lists/stageos.list.chroot <<'PACKAGES'
-xorg xserver-xorg-video-all lightdm openbox python3 python3-tk fonts-dejavu-core network-manager network-manager-gnome openssh-server mpv alsa-utils pipewire pipewire-pulse wireplumber pavucontrol xterm dbus-x11 xdg-utils thunar firmware-iwlwifi firmware-realtek firmware-atheros
+xorg xserver-xorg-video-all lightdm openbox tint2 firefox-esr gvfs gvfs-backends udisks2 xarchiver pulseaudio-utils python3 python3-tk fonts-dejavu-core network-manager network-manager-gnome openssh-server mpv alsa-utils pipewire pipewire-pulse wireplumber pavucontrol xterm dbus-x11 xdg-utils thunar firmware-iwlwifi firmware-realtek firmware-atheros
 PACKAGES
 cp "$PROJECT/stageos/"*.py config/includes.chroot/opt/stageos/
 touch config/includes.chroot/opt/stageos/__init__.py
 cat > config/includes.chroot/usr/local/bin/stageos-session <<'SESSION'
 #!/bin/sh
 openbox &
+tint2 &
 cd /opt
 exec /usr/bin/python3 -m stageos.desktop
 SESSION
@@ -44,5 +45,31 @@ set -eu
 systemctl disable ssh.service 2>/dev/null || true
 SECURITY
 chmod +x config/hooks/live/090-stageos-security.hook.chroot
+# Stage OS app launchers: use existing Linux apps rather than storing web passwords.
+mkdir -p config/includes.chroot/usr/share/applications
+cat > config/includes.chroot/usr/share/applications/stageos-files.desktop <<'APP'
+[Desktop Entry]
+Type=Application
+Name=Files
+Exec=thunar
+Icon=system-file-manager
+Categories=System;FileManager;
+APP
+cat > config/includes.chroot/usr/share/applications/stageos-gmail.desktop <<'APP'
+[Desktop Entry]
+Type=Application
+Name=Gmail (web)
+Exec=firefox-esr --new-window https://mail.google.com/
+Icon=internet-mail
+Categories=Network;Email;
+APP
+cat > config/includes.chroot/usr/share/applications/stageos-sound.desktop <<'APP'
+[Desktop Entry]
+Type=Application
+Name=Sound settings
+Exec=pavucontrol
+Icon=multimedia-volume-control
+Categories=AudioVideo;Audio;
+APP
 lb build
 find . -maxdepth 1 -name '*.iso' -print
