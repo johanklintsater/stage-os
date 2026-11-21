@@ -50,8 +50,20 @@ class Desktop:
         self.setlist=self.load_setlist()
         top=tk.Frame(root,bg='#18232b'); top.pack(fill='x')
         tk.Label(top,text='◉ STAGE OS',font=('DejaVu Sans',22,'bold'),fg='#6df0c1',bg='#18232b').pack(side='left',padx=20,pady=12)
-        for name,fn in [('LÅTTEXTER',self.open_selected_text),('LJUD',self.toggle_audio),('NY TEXT',self.new_text),('IMPORTERA',self.import_files),('NÄTVERK',self.network),('SETLIST',self.show_setlist),('PAPPERSKORG',self.show_trash),('BACKUP',self.backup_dialog),('UPPDATERA',self.refresh)]:
+        for name,fn in [('LÅTTEXTER',self.open_selected_text),('LJUD',self.toggle_audio),('NY TEXT',self.new_text),('IMPORTERA',self.import_files),('NÄTVERK',self.network),('SETLIST',self.show_setlist),('PAPPERSKORG',self.show_trash),('BACKUP',self.backup_dialog)]:
             ttk.Button(top,text=name,command=fn).pack(side='left',padx=3)
+        # Secondary apps in a compact menu, avoiding buttons clipped on smaller screens.
+        apps=tk.Menubutton(top,text='APPAR ▾',font=('DejaVu Sans',10,'bold'),
+                           bg='#263849',fg='#e9f3f6',activebackground='#315b61',
+                           activeforeground='white',relief='flat',padx=10,pady=9)
+        menu=tk.Menu(apps,tearoff=False)
+        menu.add_command(label='Filer (Thunar)',command=self.open_folder)
+        menu.add_command(label='Webbläsare',command=self.browser)
+        menu.add_command(label='Gmail (webb)',command=self.gmail)
+        menu.add_command(label='Ljudinställningar',command=self.sound_settings)
+        menu.add_separator()
+        menu.add_command(label='Uppdatera bibliotek',command=self.refresh)
+        apps.configure(menu=menu);apps.pack(side='right',padx=10)
         body=tk.PanedWindow(root,orient='horizontal',sashwidth=6,bg='#26333b'); body.pack(fill='both',expand=True,padx=14,pady=14)
         sidebar=tk.Frame(body,bg='#18232b'); body.add(sidebar,minsize=220,width=340)
         tk.Label(sidebar,text='01 / BIBLIOTEK',fg='#6df0c1',bg='#18232b',font=('DejaVu Sans',13,'bold')).pack(anchor='w',padx=12,pady=10)
@@ -194,6 +206,29 @@ class Desktop:
             try:restore_file(LIBRARY,files[idx[0]]);win.destroy();self.refresh()
             except (OSError,ValueError) as exc:messagebox.showerror('Återställning',str(exc))
         ttk.Button(win,text='ÅTERSTÄLL MARKERAD',command=restore).pack(pady=12)
+
+    def launch_app(self, candidates, args=()):
+        for executable in candidates:
+            if shutil.which(executable):
+                try:
+                    subprocess.Popen([executable, *args],stdin=subprocess.DEVNULL,
+                                     stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                    return True
+                except OSError as exc:
+                    messagebox.showerror('Appen kunde inte starta',str(exc))
+                    return False
+        messagebox.showinfo('App saknas','Ingen kompatibel app är installerad: '+', '.join(candidates))
+        return False
+
+    def browser(self):
+        self.launch_app(('firefox-esr','firefox','chromium'))
+
+    def gmail(self):
+        self.launch_app(('firefox-esr','firefox','chromium'),
+                        ('--new-window','https://mail.google.com/'))
+
+    def sound_settings(self):
+        self.launch_app(('pavucontrol',))
 
     def network(self):
         if shutil.which('nm-connection-editor'):
