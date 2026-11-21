@@ -53,9 +53,10 @@ class Desktop:
         self.home=tk.Frame(root,bg='#0b111a')
         self.show_home()
         top=tk.Frame(root,bg='#18232b'); top.pack(fill='x')
+        toolbar=tk.Frame(root,bg='#18232b');toolbar.pack(fill='x')
         tk.Label(top,text='◉ STAGE OS',font=('DejaVu Sans',22,'bold'),fg='#6df0c1',bg='#18232b').pack(side='left',padx=20,pady=12)
         for name,fn in [('LÅTTEXTER',self.open_selected_text),('LJUD',self.toggle_audio),('NY TEXT',self.new_text),('IMPORTERA',self.import_files),('NÄTVERK',self.network),('SETLIST',self.show_setlist),('PAPPERSKORG',self.show_trash),('BACKUP',self.backup_dialog)]:
-            ttk.Button(top,text=name,command=fn).pack(side='left',padx=3)
+            ttk.Button(toolbar,text=name,command=fn).pack(side='left',padx=3,pady=4)
         # Secondary apps in a compact menu, avoiding buttons clipped on smaller screens.
         apps=tk.Menubutton(top,text='APPAR ▾',font=('DejaVu Sans',10,'bold'),
                            bg='#263849',fg='#e9f3f6',activebackground='#315b61',
@@ -108,7 +109,7 @@ class Desktop:
                        font=('DejaVu Sans Mono',18))
         clock.pack(side='right')
         def tick():
-            if not self.home.winfo_exists():return
+            if not self.home.winfo_exists() or not clock.winfo_exists():return
             if self.home.winfo_ismapped():
                 clock.configure(text=time.strftime('%Y-%m-%d   %H:%M:%S'))
             self.home.after(1000,tick)
@@ -118,7 +119,7 @@ class Desktop:
         tk.Label(self.home,text='BOOT. PLAY. PERFORM.',fg='#6df0c1',bg='#0b111a',
                  font=('DejaVu Sans',14,'bold')).pack(pady=(0,35))
         grid=tk.Frame(self.home,bg='#0b111a');grid.pack()
-        choices=[('LIVE MODE','Texter och setlist',self.show_setlist),
+        choices=[('LIVE MODE','Texter och setlist',self.enter_live_mode),
                  ('SOUNDBOARD','Musik och ljudeffekter',self.soundboard),
                  ('LIBRARY','Bibliotek och filer',self.enter_desktop),
                  ('DESKTOP','Verktyg och nätverk',self.enter_desktop)]
@@ -133,6 +134,10 @@ class Desktop:
             button.pack(fill='both',expand=True)
         tk.Label(self.home,text='LOCAL FIRST  •  OFFLINE READY',
                  fg='#829a9d',bg='#0b111a',font=('DejaVu Sans',10)).pack(pady=20)
+
+    def enter_live_mode(self):
+        self.enter_desktop()
+        self.show_setlist()
 
     def enter_desktop(self):
         self.home.place_forget()
