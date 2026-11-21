@@ -11,9 +11,11 @@ from pathlib import Path
 try:
     from .operations import create_document, save_document, import_file, trash_file, restore_file
     from .backup import backup_texts, restore_texts
+    from .soundboard import Soundboard
 except ImportError:
     from operations import create_document, save_document, import_file, trash_file, restore_file
     from backup import backup_texts, restore_texts
+    from soundboard import Soundboard
 
 try:
     from .library import AUDIO_EXT, TEXT_EXT, list_media, read_text, MAX_TEXT_BYTES
@@ -48,6 +50,8 @@ class Desktop:
         style.map('TButton',background=[('active','#315b61')])
         self.setlist_path=LIBRARY.parent/'setlist.json'
         self.setlist=self.load_setlist()
+        self.home=tk.Frame(root,bg='#0b111a')
+        self.show_home()
         top=tk.Frame(root,bg='#18232b'); top.pack(fill='x')
         tk.Label(top,text='◉ STAGE OS',font=('DejaVu Sans',22,'bold'),fg='#6df0c1',bg='#18232b').pack(side='left',padx=20,pady=12)
         for name,fn in [('LÅTTEXTER',self.open_selected_text),('LJUD',self.toggle_audio),('NY TEXT',self.new_text),('IMPORTERA',self.import_files),('NÄTVERK',self.network),('SETLIST',self.show_setlist),('PAPPERSKORG',self.show_trash),('BACKUP',self.backup_dialog)]:
@@ -61,6 +65,8 @@ class Desktop:
         menu.add_command(label='Webbläsare',command=self.browser)
         menu.add_command(label='Gmail (webb)',command=self.gmail)
         menu.add_command(label='Ljudinställningar',command=self.sound_settings)
+        menu.add_command(label='Soundboard',command=self.soundboard)
+        menu.add_command(label='Startsida',command=self.show_home)
         menu.add_separator()
         menu.add_command(label='Uppdatera bibliotek',command=self.refresh)
         apps.configure(menu=menu);apps.pack(side='right',padx=10)
@@ -84,9 +90,56 @@ class Desktop:
         ttk.Button(bottom,text='ÖPPNA MAPP',command=self.open_folder).pack(side='left',padx=8)
         tk.Label(bottom,textvariable=self.status,bg='#18232b',fg='#d8e7e0').pack(side='right',padx=14)
         self.files=[]; self.refresh(); self.root.protocol('WM_DELETE_WINDOW',self.close)
+        self.home.lift()
         self.root.bind_all('<Control-n>',lambda e:self.new_text())
         self.root.bind_all('<Control-o>',lambda e:self.import_files())
         self.listbox.bind('<Delete>',lambda e:self.delete_selected())
+
+    def show_home(self):
+        """Full-screen-style landing page with a clock and four clear destinations."""
+        self.home.place(relx=0,rely=0,relwidth=1,relheight=1)
+        self.home.lift()
+        for widget in self.home.winfo_children():widget.destroy()
+        header=tk.Frame(self.home,bg='#0b111a')
+        header.pack(fill='x',padx=32,pady=24)
+        tk.Label(header,text='● STAGE OS',fg='#6df0c1',bg='#0b111a',
+                 font=('DejaVu Sans',16,'bold')).pack(side='left')
+        clock=tk.Label(header,fg='#e9f3f6',bg='#0b111a',
+                       font=('DejaVu Sans Mono',18))
+        clock.pack(side='right')
+        def tick():
+            if not self.home.winfo_exists():return
+            if self.home.winfo_ismapped():
+                clock.configure(text=time.strftime('%Y-%m-%d   %H:%M:%S'))
+            self.home.after(1000,tick)
+        tick()
+        tk.Label(self.home,text='STAGE OS',fg='white',bg='#0b111a',
+                 font=('DejaVu Sans',46,'bold')).pack(pady=(42,5))
+        tk.Label(self.home,text='BOOT. PLAY. PERFORM.',fg='#6df0c1',bg='#0b111a',
+                 font=('DejaVu Sans',14,'bold')).pack(pady=(0,35))
+        grid=tk.Frame(self.home,bg='#0b111a');grid.pack()
+        choices=[('LIVE MODE','Texter och setlist',self.show_setlist),
+                 ('SOUNDBOARD','Musik och ljudeffekter',self.soundboard),
+                 ('LIBRARY','Bibliotek och filer',self.enter_desktop),
+                 ('DESKTOP','Verktyg och nätverk',self.enter_desktop)]
+        for i,(name,description,action) in enumerate(choices):
+            tile=tk.Frame(grid,bg='#182b34',width=260,height=120)
+            tile.grid(row=i//2,column=i%2,padx=9,pady=9)
+            tile.grid_propagate(False)
+            button=tk.Button(tile,text=name+'\\n'+description,command=action,
+                             bg='#182b34',fg='#e9f3f6',activebackground='#285348',
+                             activeforeground='white',relief='flat',cursor='hand2',
+                             font=('DejaVu Sans',13,'bold'))
+            button.pack(fill='both',expand=True)
+        tk.Label(self.home,text='LOCAL FIRST  •  OFFLINE READY',
+                 fg='#829a9d',bg='#0b111a',font=('DejaVu Sans',10)).pack(pady=20)
+
+    def enter_desktop(self):
+        self.home.place_forget()
+
+    def soundboard(self):
+        self.enter_desktop()
+        Soundboard(self.root,LIBRARY,self.audio)
 
     def backup_dialog(self):
         choice = messagebox.askyesnocancel('STAGE OS Backup', 'Ja: säkerhetskopiera TXT/MD till vald mapp.\nNej: återställ från ZIP (befintliga filer skrivs inte över).')
