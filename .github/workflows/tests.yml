@@ -1,0 +1,16 @@
+name: Tests
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run syntax checks and tests
+        run: |
+          python3 -m compileall -q stageos
+          bash -n iso/build-iso.sh
+          python3 -m unittest discover -s tests -v
